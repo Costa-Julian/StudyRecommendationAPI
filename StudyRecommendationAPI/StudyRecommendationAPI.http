@@ -1,0 +1,139 @@
+@baseUrl = http://localhost:5295
+
+### 1. Procesar syllabus - Ingeniería de Datos II (ya seedeada, devuelve existente)
+POST {{baseUrl}}/api/syllabus/process
+Content-Type: application/json
+
+{
+  "subjectName": "Ingeniería de Datos II",
+  "career": "Ingeniería en Sistemas",
+  "institution": "UADE - Facultad de Ingeniería (FAIN)",
+  "fileBase64": ""
+}
+
+###
+
+### 2. Procesar syllabus - Seminario de Integración Profesional
+POST {{baseUrl}}/api/syllabus/process
+Content-Type: application/json
+
+{
+  "subjectName": "Seminario de Integración Profesional",
+  "career": "Ingeniería en Sistemas",
+  "institution": "UADE - Facultad de Ingeniería (FAIN)",
+  "fileBase64": ""
+}
+
+###
+
+### 3. Procesar syllabus - Estadística Aplicada
+POST {{baseUrl}}/api/syllabus/process
+Content-Type: application/json
+
+{
+  "subjectName": "Estadística Aplicada",
+  "career": "Ingeniería en Sistemas",
+  "institution": "UADE - Facultad de Ingeniería (FAIN)",
+  "fileBase64": ""
+}
+
+###
+
+### 4. Procesar syllabus - Materia nueva (sin mock, usa temas genéricos)
+POST {{baseUrl}}/api/syllabus/process
+Content-Type: application/json
+
+{
+  "subjectName": "Arquitectura de Software",
+  "career": "Ingeniería en Sistemas",
+  "institution": "UADE",
+  "fileBase64": "SGVsbG8gV29ybGQ="
+}
+
+###
+
+### 5. Obtener recomendaciones - topicId=1 (Concepto de NoSQL)
+GET {{baseUrl}}/api/recommendations/1
+
+###
+
+### 6. Obtener recomendaciones - topicId=14 (Teorema CAP - tiene los mejores votos)
+GET {{baseUrl}}/api/recommendations/14
+
+###
+
+### 7. Obtener recomendaciones - tema inexistente (debe devolver 404)
+GET {{baseUrl}}/api/recommendations/9999
+
+###
+
+### 8. Registrar feedback positivo
+POST {{baseUrl}}/api/feedback
+Content-Type: application/json
+
+{
+  "resourceId": 1,
+  "userId": "user_test_01",
+  "isHelpful": true
+}
+
+###
+
+### 9. Registrar feedback negativo
+POST {{baseUrl}}/api/feedback
+Content-Type: application/json
+
+{
+  "resourceId": 2,
+  "userId": "user_test_01",
+  "isHelpful": false
+}
+
+###
+
+### 10. Feedback duplicado (debe devolver 409 Conflict)
+POST {{baseUrl}}/api/feedback
+Content-Type: application/json
+
+{
+  "resourceId": 1,
+  "userId": "user_test_01",
+  "isHelpful": true
+}
+
+###
+
+### 11. Feedback en recurso inexistente (debe devolver 404)
+POST {{baseUrl}}/api/feedback
+Content-Type: application/json
+
+{
+  "resourceId": 9999,
+  "userId": "user_test_01",
+  "isHelpful": true
+}
+
+###
+
+### 12. Listar todas las materias con stats
+GET {{baseUrl}}/api/subjects
+
+###
+
+### 13. Temas de materia 1 (Ingeniería de Datos II) por unidad
+GET {{baseUrl}}/api/subjects/1/topics
+
+###
+
+### 14. Temas de materia 2 (Seminario de Integración Profesional)
+GET {{baseUrl}}/api/subjects/2/topics
+
+###
+
+### 15. Temas de materia 3 (Estadística Aplicada)
+GET {{baseUrl}}/api/subjects/3/topics
+
+###
+
+### 16. Materia inexistente (debe devolver 404)
+GET {{baseUrl}}/api/subjects/9999/topics

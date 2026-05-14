@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StudyRecommendationAPI — Documentación</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222536;
+    --border: #2e3147;
+    --accent: #7c6af7;
+    --accent2: #5eead4;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --ok: #4ade80;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --code-bg: #12141e;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+  nav { width: 260px; min-width: 260px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  main { flex: 1; padding: 40px 48px; max-width: 960px; }
+
+  /* Nav */
+  .nav-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .nav-logo h2 { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: .5px; text-transform: uppercase; }
+  .nav-logo p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  nav ul { list-style: none; }
+  nav ul li a { display: block; padding: 6px 20px; color: var(--muted); font-size: 13px; transition: color .15s, background .15s; border-left: 2px solid transparent; }
+  nav ul li a:hover { color: var(--text); background: var(--surface2); text-decoration: none; }
+  nav ul li a.active { color: var(--accent); border-left-color: var(--accent); }
+  nav .nav-group { padding: 14px 20px 4px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Headings */
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 15px; font-weight: 600; margin: 28px 0 10px; color: var(--accent2); }
+  h4 { font-size: 13px; font-weight: 600; margin: 16px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  p { margin-bottom: 12px; color: var(--text); }
+  .subtitle { color: var(--muted); font-size: 15px; margin-bottom: 32px; }
+
+  /* Code */
+  code { font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 12.5px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; color: var(--accent2); }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; overflow-x: auto; margin: 12px 0; }
+  pre code { background: none; padding: 0; color: var(--text); font-size: 12.5px; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge-get    { background: #1a3a2e; color: #4ade80; }
+  .badge-post   { background: #2a2a1a; color: #fbbf24; }
+  .badge-delete { background: #2a1a1a; color: #f87171; }
+  .badge-200    { background: #1a3a2e; color: #4ade80; }
+  .badge-400    { background: #2a2a1a; color: #fbbf24; }
+  .badge-404    { background: #2a1a1a; color: #f87171; }
+  .badge-409    { background: #2a1a2a; color: #c084fc; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .card h3 { margin-top: 0; }
+
+  /* Endpoint block */
+  .endpoint { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 24px; overflow: hidden; }
+  .endpoint-header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .endpoint-header .path { font-family: 'Cascadia Code', Consolas, monospace; font-size: 13px; font-weight: 600; }
+  .endpoint-header .summary { color: var(--muted); font-size: 12px; margin-left: auto; }
+  .endpoint-body { padding: 20px; }
+  .endpoint-body h4 { margin-top: 0; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: var(--surface2); color: var(--muted); font-weight: 600; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .required { color: var(--danger); font-size: 10px; font-weight: 700; }
+  .optional { color: var(--muted); font-size: 10px; }
+
+  /* File tree */
+  .tree { font-family: 'Cascadia Code', Consolas, monospace; font-size: 12.5px; background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; line-height: 1.8; }
+  .tree .dir { color: var(--accent); }
+  .tree .file { color: var(--text); }
+  .tree .comment { color: var(--muted); }
+
+  /* Rule list */
+  .rules { list-style: none; padding: 0; }
+  .rules li { padding: 6px 0 6px 20px; border-bottom: 1px solid var(--border); position: relative; font-size: 13px; }
+  .rules li:last-child { border-bottom: none; }
+  .rules li::before { content: '›'; position: absolute; left: 4px; color: var(--accent); }
+
+  /* Info box */
+  .info { background: #1a2a3a; border-left: 3px solid var(--accent2); border-radius: 0 var(--radius) var(--radius) 0; padding: 12px 16px; margin: 12px 0; font-size: 13px; }
+  .warn-box { background: #2a2010; border-left: 3px solid var(--warn); border-radius: 0 var(--radius) var(--radius) 0; padding: 12px 16px; margin: 12px 0; font-size: 13px; }
+
+  /* Model fields */
+  .model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+  @media (max-width: 700px) { .model-grid { grid-template-columns: 1fr; } main { padding: 24px 16px; } nav { display: none; } }
+
+  /* Responses grid */
+  .resp-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .resp-row:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ═══════════════════════════════ NAV ═══════════════════════════════ -->
+<nav>
+  <div class="nav-logo">
+    <h2>StudyRecommendation API</h2>
+    <p>.NET 8 · Minimal API · SQLite</p>
+  </div>
+  <ul>
+    <li class="nav-group">Proyecto</li>
+    <li><a href="#overview">Visión general</a></li>
+    <li><a href="#tech">Stack técnico</a></li>
+    <li><a href="#structure">Estructura de carpetas</a></li>
+    <li><a href="#rules">Reglas de código</a></li>
+
+    <li class="nav-group">Modelo de datos</li>
+    <li><a href="#subjects-model">Subjects</a></li>
+    <li><a href="#topics-model">Topics</a></li>
+    <li><a href="#resources-model">Resources</a></li>
+    <li><a href="#feedbacks-model">Feedbacks</a></li>
+
+    <li class="nav-group">Endpoints</li>
+    <li><a href="#ep-syllabus">POST /api/syllabus/process</a></li>
+    <li><a href="#ep-reco">GET /api/recommendations/{topicId}</a></li>
+    <li><a href="#ep-feedback">POST /api/feedback</a></li>
+    <li><a href="#ep-subjects">GET /api/subjects</a></li>
+    <li><a href="#ep-topics">GET /api/subjects/{id}/topics</a></li>
+
+    <li class="nav-group">Datos</li>
+    <li><a href="#seed">Seed data</a></li>
+    <li><a href="#rating">Cálculo de rating</a></li>
+
+    <li class="nav-group">Config</li>
+    <li><a href="#startup">Startup</a></li>
+    <li><a href="#cors">CORS</a></li>
+    <li><a href="#http-file">Archivo .http</a></li>
+    <li><a href="#pending">Pendiente / siguiente etapa</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════ MAIN ══════════════════════════════ -->
+<main>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <h1>StudyRecommendationAPI</h1>
+  <p class="subtitle">Módulo backend independiente para una app mobile de gestión de tiempo de estudio universitario.</p>
+
+  <div class="card">
+    <h3>¿Qué hace este servicio?</h3>
+    <ol style="padding-left:20px; line-height:2;">
+      <li>Recibe un <strong>syllabus</strong> (plan de estudios) y devuelve los temas extraídos de forma estructurada.</li>
+      <li>Dado un <strong>tema</strong>, recomienda recursos educativos (videos, artículos, libros) ordenados por rating colaborativo.</li>
+      <li>Registra <strong>feedback</strong> de estudiantes ("¿te sirvió?") y actualiza el rating del recurso en tiempo real.</li>
+    </ol>
+  </div>
+
+  <div class="info">
+    <strong>Contexto de integración:</strong> la app mobile no sabe ni le importa qué pasa del lado del servidor. Solo consume endpoints REST y procesa JSONs. Sin autenticación.
+  </div>
+
+  <div class="warn-box">
+    <strong>Estado actual — todo es mock:</strong> no hay integración real con YouTube API ni procesamiento real de PDFs con IA. El endpoint de syllabus simula la extracción devolviendo temas hardcodeados según el nombre de la materia.
+  </div>
+</section>
+
+<!-- TECH -->
+<h2 id="tech">Stack técnico</h2>
+<table>
+  <tr><th>Componente</th><th>Tecnología</th><th>Notas</th></tr>
+  <tr><td>Framework</td><td>ASP.NET Core 8 — Minimal API</td><td>Sin Controllers. Endpoints en Extensions/</td></tr>
+  <tr><td>ORM</td><td>Entity Framework Core 8</td><td>Code-first, sin migraciones — <code>EnsureCreated()</code></td></tr>
+  <tr><td>Base de datos</td><td>SQLite</td><td>Archivo <code>studyrecommendation.db</code> en bin/Debug/</td></tr>
+  <tr><td>Documentación</td><td>Swagger / Swashbuckle</td><td>Solo en Development. Ruta: <code>/swagger</code></td></tr>
+  <tr><td>CORS</td><td>AllowAnyOrigin / Header / Method</td><td>Permisivo para consumo mobile</td></tr>
+  <tr><td>.NET target</td><td>net8.0</td><td>Nullable enable, ImplicitUsings enable</td></tr>
+</table>
+
+<h3>NuGet packages</h3>
+<pre><code>Microsoft.AspNetCore.OpenApi          8.0.27
+Swashbuckle.AspNetCore                6.6.2
+Microsoft.EntityFrameworkCore.Sqlite  8.0.11
+Microsoft.EntityFrameworkCore.Design  8.0.11</code></pre>
+
+<!-- STRUCTURE -->
+<h2 id="structure">Estructura de carpetas</h2>
+<div class="tree">
+<span class="dir">StudyRecommendationAPI/</span>
+├── <span class="dir">Models/</span>
+│   ├── <span class="file">Subject.cs</span>
+│   ├── <span class="file">Topic.cs</span>
+│   ├── <span class="file">Resource.cs</span>
+│   └── <span class="file">Feedback.cs</span>
+├── <span class="dir">DTOs/</span>
+│   ├── <span class="file">SyllabusRequests.cs</span>       <span class="comment">— ProcessSyllabusRequest</span>
+│   ├── <span class="file">SyllabusResponses.cs</span>      <span class="comment">— ProcessSyllabusResponse, UnitDto, TopicSummaryDto</span>
+│   ├── <span class="file">RecommendationResponses.cs</span> <span class="comment">— RecommendationsResponse, ResourceDto</span>
+│   ├── <span class="file">FeedbackRequests.cs</span>       <span class="comment">— SubmitFeedbackRequest</span>
+│   ├── <span class="file">FeedbackResponses.cs</span>      <span class="comment">— SubmitFeedbackResponse</span>
+│   └── <span class="file">SubjectResponses.cs</span>       <span class="comment">— SubjectSummaryDto, SubjectTopicsResponse, UnitWithResourcesDto, TopicWithResourceCountDto</span>
+├── <span class="dir">Data/</span>
+│   ├── <span class="file">AppDbContext.cs</span>           <span class="comment">— DbContext con 4 DbSets, índice único ResourceId+UserId en Feedbacks</span>
+│   └── <span class="file">SeedData.cs</span>              <span class="comment">— SeedAsync() + GetMockTopics() para syllabus mock</span>
+├── <span class="dir">Extensions/</span>
+│   ├── <span class="file">SyllabusEndpoints.cs</span>
+│   ├── <span class="file">RecommendationEndpoints.cs</span>
+│   ├── <span class="file">FeedbackEndpoints.cs</span>
+│   └── <span class="file">SubjectEndpoints.cs</span>
+├── <span class="dir">Properties/</span>
+│   └── <span class="file">launchSettings.json</span>       <span class="comment">— launchUrl: "swagger", puerto HTTP 5295 / HTTPS 7119</span>
+├── <span class="file">Program.cs</span>
+├── <span class="file">appsettings.json</span>             <span class="comment">— ConnectionStrings:DefaultConnection</span>
+├── <span class="file">StudyRecommendationAPI.http</span>  <span class="comment">— 16 llamadas de ejemplo</span>
+└── <span class="file">StudyRecommendationAPI.csproj</span>
+</div>
+
+<!-- RULES -->
+<h2 id="rules">Reglas de código obligatorias</h2>
+<ul class="rules">
+  <li><strong>Sin <code>var</code> en ningún lugar.</strong> Siempre tipos explícitos: <code>string</code>, <code>int</code>, <code>List&lt;T&gt;</code>, <code>AppDbContext</code>, etc.</li>
+  <li>Entidades (<code>Models/</code>) nunca se exponen directamente. Siempre se usan DTOs.</li>
+  <li>Mensajes de respuesta al usuario en <strong>español</strong>. Código (clases, métodos, propiedades) en <strong>inglés</strong>.</li>
+  <li>Errores con <code>Results.Problem(..., statusCode: N)</code> — ProblemDetails estándar.</li>
+  <li>No hay autenticación ni autorización en ningún endpoint.</li>
+  <li>Cada grupo de endpoints vive en su propio archivo en <code>Extensions/</code> como método de extensión sobre <code>WebApplication</code>.</li>
+</ul>
+
+<!-- ═══════════ MODELOS ═══════════ -->
+<h2 id="subjects-model">Modelo — Subjects</h2>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>Id</code></td><td>int</td><td>PK, autoincrement</td></tr>
+  <tr><td><code>Name</code></td><td>string</td><td>Required. Usado como clave de match en syllabus</td></tr>
+  <tr><td><code>Career</code></td><td>string</td><td>Ej: "Ingeniería en Sistemas"</td></tr>
+  <tr><td><code>Institution</code></td><td>string</td><td>Ej: "UADE - Facultad de Ingeniería (FAIN)"</td></tr>
+  <tr><td><code>CreatedAt</code></td><td>DateTime</td><td>UTC</td></tr>
+  <tr><td><code>Topics</code></td><td>List&lt;Topic&gt;</td><td>Nav property</td></tr>
+</table>
+
+<h2 id="topics-model">Modelo — Topics</h2>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>Id</code></td><td>int</td><td>PK</td></tr>
+  <tr><td><code>SubjectId</code></td><td>int</td><td>FK → Subjects</td></tr>
+  <tr><td><code>UnitNumber</code></td><td>int</td><td>Número de unidad (1, 2, 3…)</td></tr>
+  <tr><td><code>UnitName</code></td><td>string</td><td>Nombre de la unidad, ej: "Introducción a NoSQL"</td></tr>
+  <tr><td><code>TopicName</code></td><td>string</td><td>Nombre específico del tema</td></tr>
+  <tr><td><code>OrderIndex</code></td><td>int</td><td>Orden dentro de la unidad</td></tr>
+  <tr><td><code>Subject</code></td><td>Subject</td><td>Nav property</td></tr>
+  <tr><td><code>Resources</code></td><td>List&lt;Resource&gt;</td><td>Nav property</td></tr>
+</table>
+
+<h2 id="resources-model">Modelo — Resources</h2>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>Id</code></td><td>int</td><td>PK</td></tr>
+  <tr><td><code>TopicId</code></td><td>int</td><td>FK → Topics</td></tr>
+  <tr><td><code>Type</code></td><td>string</td><td>"video" | "article" | "book"</td></tr>
+  <tr><td><code>Title</code></td><td>string</td><td>Título descriptivo en español</td></tr>
+  <tr><td><code>Url</code></td><td>string</td><td>URL real o mock (youtube.com/watch?v=mock_xxx)</td></tr>
+  <tr><td><code>Source</code></td><td>string</td><td>"YouTube", "Khan Academy", "MIT OCW", "O'Reilly", etc.</td></tr>
+  <tr><td><code>PositiveVotes</code></td><td>int</td><td>Default 0. Se incrementa con feedback IsHelpful=true</td></tr>
+  <tr><td><code>NegativeVotes</code></td><td>int</td><td>Default 0. Se incrementa con feedback IsHelpful=false</td></tr>
+  <tr><td><code>CreatedAt</code></td><td>DateTime</td><td>UTC</td></tr>
+  <tr><td><code>Topic</code></td><td>Topic</td><td>Nav property</td></tr>
+  <tr><td><code>Feedbacks</code></td><td>List&lt;Feedback&gt;</td><td>Nav property</td></tr>
+</table>
+
+<h2 id="feedbacks-model">Modelo — Feedbacks</h2>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>Id</code></td><td>int</td><td>PK</td></tr>
+  <tr><td><code>ResourceId</code></td><td>int</td><td>FK → Resources</td></tr>
+  <tr><td><code>UserId</code></td><td>string</td><td>Identificador libre del usuario (ej: "user001")</td></tr>
+  <tr><td><code>IsHelpful</code></td><td>bool</td><td>true = voto positivo, false = voto negativo</td></tr>
+  <tr><td><code>CreatedAt</code></td><td>DateTime</td><td>UTC</td></tr>
+  <tr><td><code>Resource</code></td><td>Resource</td><td>Nav property</td></tr>
+</table>
+<div class="info">Índice único en <code>(ResourceId, UserId)</code> — un usuario no puede votar dos veces el mismo recurso. Garantizado a nivel DB.</div>
+
+<!-- ═══════════ ENDPOINTS ═══════════ -->
+<h2>Endpoints</h2>
+
+<!-- SYLLABUS -->
+<div class="endpoint" id="ep-syllabus">
+  <div class="endpoint-header">
+    <span class="badge badge-post">POST</span>
+    <span class="path">/api/syllabus/process</span>
+    <span class="summary">Procesa un syllabus y devuelve temas estructurados</span>
+  </div>
+  <div class="endpoint-body">
+    <h4>Request body</h4>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th></th><th>Descripción</th></tr>
+      <tr><td><code>subjectName</code></td><td>string</td><td><span class="required">REQ</span></td><td>Nombre de la materia. Clave de match para detectar duplicados.</td></tr>
+      <tr><td><code>career</code></td><td>string</td><td><span class="optional">opt</span></td><td>Carrera. Solo se usa al crear.</td></tr>
+      <tr><td><code>institution</code></td><td>string</td><td><span class="optional">opt</span></td><td>Institución. Solo se usa al crear.</td></tr>
+      <tr><td><code>fileBase64</code></td><td>string</td><td><span class="optional">opt</span></td><td>Se recibe pero se <strong>ignora</strong> (mock).</td></tr>
+    </table>
+
+    <h4>Lógica</h4>
+    <ul class="rules">
+      <li>Busca materia por <code>Name</code> exacto (case-sensitive).</li>
+      <li>Si existe → devuelve los temas existentes sin crear nada.</li>
+      <li>Si no existe → crea Subject + Topics mockeados desde <code>SeedData.GetMockTopics()</code>.</li>
+      <li>Si el nombre no tiene mock definido → genera temas genéricos (3 unidades, 2 temas cada una).</li>
+    </ul>
+
+    <h4>Response 200</h4>
+<pre><code>{
+  "subjectId": 1,
+  "subjectName": "Ingeniería de Datos II",
+  "units": [
+    {
+      "unitNumber": 1,
+      "unitName": "Introducción a NoSQL",
+      "topics": [
+        { "topicId": 1, "topicName": "Concepto de NoSQL", "orderIndex": 1 },
+        { "topicId": 2, "topicName": "Modelo Relacional vs estructuras No Relacionales", "orderIndex": 2 }
+      ]
+    }
+  ]
+}</code></pre>
+
+    <div class="resp-row"><span class="badge badge-200">200</span> Materia encontrada o creada correctamente.</div>
+    <div class="resp-row"><span class="badge badge-400">400</span> <code>subjectName</code> vacío.</div>
+  </div>
+</div>
+
+<!-- RECOMMENDATIONS -->
+<div class="endpoint" id="ep-reco">
+  <div class="endpoint-header">
+    <span class="badge badge-get">GET</span>
+    <span class="path">/api/recommendations/{topicId}</span>
+    <span class="summary">Recursos de un tema ordenados por rating descendente</span>
+  </div>
+  <div class="endpoint-body">
+    <h4>Path param</h4>
+    <table>
+      <tr><th>Param</th><th>Tipo</th><th>Descripción</th></tr>
+      <tr><td><code>topicId</code></td><td>int</td><td>ID del tema obtenido de syllabus/process o subjects/{id}/topics</td></tr>
+    </table>
+
+    <h4>Ordenamiento</h4>
+    <ul class="rules">
+      <li>Primero los recursos con al menos 1 voto.</li>
+      <li>Entre ellos, por rating descendente (positiveVotes / totalVotes).</li>
+      <li>Empate de rating → mayor totalVotes primero.</li>
+      <li>Recursos sin votos van al final (rating = 0).</li>
+    </ul>
+
+    <h4>Response 200</h4>
+<pre><code>{
+  "topicId": 14,
+  "topicName": "Teorema CAP",
+  "subjectName": "Ingeniería de Datos II",
+  "resources": [
+    {
+      "resourceId": 34,
+      "type": "video",
+      "title": "Teorema CAP explicado en 10 minutos - Bases de datos distribuidas",
+      "url": "https://www.youtube.com/watch?v=mock_cap01",
+      "source": "YouTube",
+      "rating": 0.92,
+      "totalVotes": 60
+    }
+  ]
+}</code></pre>
+
+    <div class="resp-row"><span class="badge badge-200">200</span> Lista de recursos (puede ser vacía si el tema no tiene recursos).</div>
+    <div class="resp-row"><span class="badge badge-404">404</span> topicId no existe.</div>
+  </div>
+</div>
+
+<!-- FEEDBACK -->
+<div class="endpoint" id="ep-feedback">
+  <div class="endpoint-header">
+    <span class="badge badge-post">POST</span>
+    <span class="path">/api/feedback</span>
+    <span class="summary">Registra voto de un estudiante sobre un recurso</span>
+  </div>
+  <div class="endpoint-body">
+    <h4>Request body</h4>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th></th><th>Descripción</th></tr>
+      <tr><td><code>resourceId</code></td><td>int</td><td><span class="required">REQ</span></td><td>ID del recurso a votar</td></tr>
+      <tr><td><code>userId</code></td><td>string</td><td><span class="required">REQ</span></td><td>Identificador del usuario (string libre, ej: "user001")</td></tr>
+      <tr><td><code>isHelpful</code></td><td>bool</td><td><span class="required">REQ</span></td><td>true = útil, false = no útil</td></tr>
+    </table>
+
+    <h4>Lógica</h4>
+    <ul class="rules">
+      <li>Valida que <code>userId</code> no sea vacío.</li>
+      <li>Verifica que el recurso exista.</li>
+      <li>Verifica que el usuario no haya votado ya ese recurso.</li>
+      <li>Crea registro en Feedbacks y actualiza <code>PositiveVotes</code> o <code>NegativeVotes</code> en Resources.</li>
+    </ul>
+
+    <h4>Response 200</h4>
+<pre><code>{
+  "message": "Feedback registrado",
+  "resourceId": 1,
+  "newRating": 0.88,
+  "totalVotes": 52
+}</code></pre>
+
+    <div class="resp-row"><span class="badge badge-200">200</span> Feedback guardado y contadores actualizados.</div>
+    <div class="resp-row"><span class="badge badge-400">400</span> userId vacío.</div>
+    <div class="resp-row"><span class="badge badge-404">404</span> resourceId no existe.</div>
+    <div class="resp-row"><span class="badge badge-409">409</span> El usuario ya votó ese recurso.</div>
+  </div>
+</div>
+
+<!-- SUBJECTS LIST -->
+<div class="endpoint" id="ep-subjects">
+  <div class="endpoint-header">
+    <span class="badge badge-get">GET</span>
+    <span class="path">/api/subjects</span>
+    <span class="summary">Lista todas las materias con contadores</span>
+  </div>
+  <div class="endpoint-body">
+    <h4>Response 200</h4>
+<pre><code>[
+  {
+    "subjectId": 1,
+    "name": "Ingeniería de Datos II",
+    "career": "Ingeniería en Sistemas",
+    "institution": "UADE - Facultad de Ingeniería (FAIN)",
+    "totalTopics": 23,
+    "totalResources": 58
+  }
+]</code></pre>
+    <div class="resp-row"><span class="badge badge-200">200</span> Array (puede ser vacío si no hay materias).</div>
+  </div>
+</div>
+
+<!-- SUBJECTS TOPICS -->
+<div class="endpoint" id="ep-topics">
+  <div class="endpoint-header">
+    <span class="badge badge-get">GET</span>
+    <span class="path">/api/subjects/{subjectId}/topics</span>
+    <span class="summary">Temas de una materia agrupados por unidad con conteo de recursos</span>
+  </div>
+  <div class="endpoint-body">
+    <h4>Response 200</h4>
+<pre><code>{
+  "subjectId": 1,
+  "subjectName": "Ingeniería de Datos II",
+  "units": [
+    {
+      "unitNumber": 4,
+      "unitName": "Replicación y particionamiento",
+      "topics": [
+        { "topicId": 14, "topicName": "Teorema CAP", "orderIndex": 1, "resourceCount": 3 },
+        { "topicId": 15, "topicName": "Modelos de replicación...", "orderIndex": 2, "resourceCount": 3 }
+      ]
+    }
+  ]
+}</code></pre>
+    <div class="resp-row"><span class="badge badge-200">200</span> Materia encontrada.</div>
+    <div class="resp-row"><span class="badge badge-404">404</span> subjectId no existe.</div>
+  </div>
+</div>
+
+<!-- SEED -->
+<h2 id="seed">Seed data</h2>
+<p>Se ejecuta en <code>Program.cs</code> al iniciar, solo si la tabla <code>Subjects</code> está vacía.</p>
+
+<table>
+  <tr><th>Materia</th><th>Unidades</th><th>Temas</th><th>Recursos aprox.</th></tr>
+  <tr>
+    <td><strong>Ingeniería de Datos II</strong><br/><span style="color:var(--muted);font-size:11px">UADE FAIN · Ing. en Sistemas</span></td>
+    <td>6</td><td>23</td><td>~58</td>
+  </tr>
+  <tr>
+    <td><strong>Seminario de Integración Profesional</strong><br/><span style="color:var(--muted);font-size:11px">UADE FAIN · Ing. en Sistemas</span></td>
+    <td>6</td><td>28</td><td>~65</td>
+  </tr>
+  <tr>
+    <td><strong>Estadística Aplicada</strong><br/><span style="color:var(--muted);font-size:11px">UADE FAIN · Ing. en Sistemas</span></td>
+    <td>6</td><td>19</td><td>~48</td>
+  </tr>
+</table>
+
+<h3>Distribución de votos en los recursos</h3>
+<ul class="rules">
+  <li><strong>Alta aprobación:</strong> 45–60 positivos, 2–5 negativos → rating ~0.90–0.96</li>
+  <li><strong>Aprobación media:</strong> 12–30 positivos, 3–8 negativos → rating ~0.60–0.88</li>
+  <li><strong>Pocos votos:</strong> 3–5 positivos, 1–2 negativos → rating ~0.70–0.80</li>
+  <li><strong>Sin votos:</strong> 0/0 → rating 0, aparecen al final de las recomendaciones</li>
+</ul>
+
+<p>También se generan registros en <code>Feedbacks</code> para los primeros 30 recursos (con <code>userId</code> del estilo <code>user001..user010</code>), coherentes con los votos cargados.</p>
+
+<!-- RATING -->
+<h2 id="rating">Cálculo de rating</h2>
+<pre><code>int total = resource.PositiveVotes + resource.NegativeVotes;
+double rating = total == 0 ? 0 : Math.Round((double)resource.PositiveVotes / total, 2);</code></pre>
+<p>Rango: 0.00 a 1.00. Recursos sin votos devuelven 0 y se muestran al final. No hay Bayesian average ni piso mínimo de votos en esta etapa.</p>
+
+<!-- STARTUP -->
+<h2 id="startup">Startup (Program.cs)</h2>
+<pre><code>// 1. Registra EF Core con SQLite
+builder.Services.AddDbContext&lt;AppDbContext&gt;(options =>
+    options.UseSqlite(connectionString));
+
+// 2. Registra CORS permisivo
+builder.Services.AddCors(o => o.AddDefaultPolicy(
+    p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
+// 3. Al arrancar: crea DB si no existe y seedea si está vacía
+using (IServiceScope scope = app.Services.CreateScope()) {
+    AppDbContext db = scope.ServiceProvider.GetRequiredService&lt;AppDbContext&gt;();
+    db.Database.EnsureCreated();
+    await SeedData.SeedAsync(db);
+}
+
+// 4. Mapea todos los endpoints
+app.MapSyllabusEndpoints();
+app.MapRecommendationEndpoints();
+app.MapFeedbackEndpoints();
+app.MapSubjectEndpoints();</code></pre>
+
+<div class="warn-box">La DB se crea en <code>bin/Debug/net8.0/studyrecommendation.db</code>. Si querés resetear el seed, borrá ese archivo y reiniciá.</div>
+
+<!-- CORS -->
+<h2 id="cors">CORS</h2>
+<p>Configurado con política permisiva total (<code>AllowAnyOrigin</code>, <code>AllowAnyHeader</code>, <code>AllowAnyMethod</code>). No se usa <code>WithCredentials</code> porque no hay autenticación. Suficiente para consumo desde app mobile en desarrollo y producción.</p>
+
+<!-- HTTP FILE -->
+<h2 id="http-file">Archivo .http</h2>
+<p>Ubicado en la raíz del proyecto: <code>StudyRecommendationAPI.http</code>. Contiene 16 llamadas de ejemplo, incluyendo casos de error (404, 409, 400).</p>
+<table>
+  <tr><th>#</th><th>Descripción</th></tr>
+  <tr><td>1–4</td><td>POST syllabus/process para las 3 materias seedeadas + 1 materia nueva (temas genéricos)</td></tr>
+  <tr><td>5–7</td><td>GET recommendations — topicId válido, Teorema CAP, topicId inválido (404)</td></tr>
+  <tr><td>8–11</td><td>POST feedback — positivo, negativo, duplicado (409), recurso inexistente (404)</td></tr>
+  <tr><td>12</td><td>GET /api/subjects — lista completa</td></tr>
+  <tr><td>13–16</td><td>GET /api/subjects/{id}/topics — materias 1, 2, 3 y ID inválido (404)</td></tr>
+</table>
+
+<!-- PENDING -->
+<h2 id="pending">Pendiente / siguiente etapa</h2>
+
+<div class="card">
+  <h3>Lo que falta para pasar de mock a real</h3>
+  <ul class="rules">
+    <li><strong>Procesamiento real de PDF:</strong> reemplazar la lógica de <code>SyllabusEndpoints</code> que ignora <code>fileBase64</code> por extracción real de texto (ej: Azure Document Intelligence, iTextSharp, o llamada a modelo de lenguaje).</li>
+    <li><strong>Recursos reales:</strong> integrar YouTube Data API y/o scrapers de sitios educativos para poblar <code>Resources</code> con datos reales en lugar de seed hardcodeado.</li>
+    <li><strong>Autenticación:</strong> actualmente <code>UserId</code> es un string libre. Si la app mobile agrega auth (JWT, etc.), el userId debería venir del token.</li>
+    <li><strong>Migraciones EF Core:</strong> cuando el schema cambie en producción, reemplazar <code>EnsureCreated()</code> por migraciones reales (<code>dotnet ef migrations add</code>).</li>
+    <li><strong>Rating mejorado:</strong> considerar Bayesian average o Wilson score para recursos con pocos votos.</li>
+    <li><strong>Paginación:</strong> los endpoints de recursos y materias no tienen paginación. Podría ser necesario con muchos datos.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Decisiones de diseño a tener en cuenta</h3>
+  <ul class="rules">
+    <li>El match de materia en <code>/api/syllabus/process</code> es <strong>case-sensitive</strong> y por nombre exacto. Si la app envía "ingeniería de datos II" (minúscula), no va a hacer match. Considerar normalizar o usar <code>EF.Functions.Like</code>.</li>
+    <li><code>SeedData.GetMockTopics()</code> es el "catálogo" de materias conocidas. Para agregar una nueva materia con mock, se agrega una entrada a ese dictionary.</li>
+    <li>Los votos en <code>Resources</code> son contadores denormalizados (no se calculan sumando Feedbacks). Son la fuente de verdad para el rating. El seed los carga directamente.</li>
+    <li>Los feedbacks del seed son parciales (solo los primeros 30 recursos, máximo 10 feedbacks cada uno) — son ilustrativos, no cubren todos los votos.</li>
+  </ul>
+</div>
+
+<br/><br/>
+<p style="color:var(--muted);font-size:12px;text-align:center;border-top:1px solid var(--border);padding-top:16px;">
+  Generado el 2026-05-14 · StudyRecommendationAPI v1 · ASP.NET Core 8 Minimal API
+</p>
+
+</main>
+</div>
+
+</body>
+</html>
