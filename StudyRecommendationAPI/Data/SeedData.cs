@@ -438,7 +438,7 @@ public static class SeedData
 
     public static Dictionary<string, List<(int unitNumber, string unitName, string topicName, int orderIndex)>> GetMockTopics()
     {
-        return new Dictionary<string, List<(int, string, string, int)>>
+        return new Dictionary<string, List<(int, string, string, int)>>(StringComparer.OrdinalIgnoreCase)
         {
             ["Ingeniería de Datos II"] = new()
             {

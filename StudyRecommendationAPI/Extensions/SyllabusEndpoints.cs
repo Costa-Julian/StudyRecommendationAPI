@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using StudyRecommendationAPI.Data;
 using StudyRecommendationAPI.DTOs;
@@ -14,16 +17,27 @@ public static class SyllabusEndpoints
             if (string.IsNullOrWhiteSpace(request.SubjectName))
                 return Results.Problem("El nombre de la materia es requerido.", statusCode: 400);
 
-            Subject? existing = await db.Subjects
+            string subjectName = request.SubjectName.Trim();
+
+            var allSubjects = await db.Subjects.Select(s => new { s.Id, s.Name }).ToListAsync();
+            string normalizedInput = NormalizeForMatch(subjectName);
+            var nameMatch = allSubjects
+                .Select(s => new { s.Id, s.Name, Score = WordMatchScore(normalizedInput, NormalizeForMatch(s.Name.Trim())) })
+                .Where(x => x.Score > 0)
+                .OrderByDescending(x => x.Score)
+                .ThenByDescending(x => x.Name.Length)
+                .FirstOrDefault();
+
+            Subject? existing = nameMatch == null ? null : await db.Subjects
                 .Include(s => s.Topics)
-                .FirstOrDefaultAsync(s => s.Name == request.SubjectName);
+                .FirstOrDefaultAsync(s => s.Id == nameMatch.Id);
 
             if (existing != null)
                 return Results.Ok(BuildSyllabusResponse(existing));
 
             Subject subject = new()
             {
-                Name = request.SubjectName,
+                Name = subjectName,
                 Career = request.Career,
                 Institution = request.Institution,
                 CreatedAt = DateTime.UtcNow
@@ -35,7 +49,7 @@ public static class SyllabusEndpoints
                 SeedData.GetMockTopics();
 
             List<(int unitNumber, string unitName, string topicName, int orderIndex)> topicDefs =
-                mockData.TryGetValue(request.SubjectName, out List<(int, string, string, int)>? found)
+                mockData.TryGetValue(subjectName, out List<(int, string, string, int)>? found)
                     ? found
                     : GenerateGenericTopics();
 
@@ -84,6 +98,49 @@ public static class SyllabusEndpoints
             SubjectName = subject.Name,
             Units = units
         };
+    }
+
+    private static string NormalizeForMatch(string text)
+    {
+        // Remove diacritics and lowercase
+        string normalized = new string(
+            text.ToLowerInvariant()
+                .Normalize(NormalizationForm.FormD)
+                .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                .ToArray()
+        ).Normalize(NormalizationForm.FormC);
+
+        // Convert Roman numerals to Arabic so "II" == "2", "III" == "3", etc.
+        normalized = Regex.Replace(normalized, @"\bxii\b", "12");
+        normalized = Regex.Replace(normalized, @"\bxi\b", "11");
+        normalized = Regex.Replace(normalized, @"\bviii\b", "8");
+        normalized = Regex.Replace(normalized, @"\bvii\b", "7");
+        normalized = Regex.Replace(normalized, @"\bvi\b", "6");
+        normalized = Regex.Replace(normalized, @"\biv\b", "4");
+        normalized = Regex.Replace(normalized, @"\biii\b", "3");
+        normalized = Regex.Replace(normalized, @"\bii\b", "2");
+
+        return normalized;
+    }
+
+    // Score how many words from the input match words in the subject (prefix match for abbreviations)
+    private static int WordMatchScore(string normalizedInput, string normalizedSubject)
+    {
+        string[] inputWords = normalizedInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string[] subjectWords = normalizedSubject.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        return inputWords.Count(iw =>
+            iw.Length <= 2
+                ? subjectWords.Any(sw => sw == iw)
+                : subjectWords.Any(sw => sw.StartsWith(iw) || iw.StartsWith(sw))
+        );
+    }
+
+    private static string RemoveDiacritics(string text)
+    {
+        string normalized = text.Normalize(NormalizationForm.FormD);
+        var chars = normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
+        return new string(chars.ToArray()).Normalize(NormalizationForm.FormC);
     }
 
     private static List<(int, string, string, int)> GenerateGenericTopics()

@@ -1,17 +1,18 @@
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using StudyRecommendationAPI.Data;
 using StudyRecommendationAPI.Extensions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddOpenApi(options =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    options.AddDocumentTransformer((doc, _, _) =>
     {
-        Title = "StudyRecommendation API",
-        Version = "v1",
-        Description = "API de recomendación de recursos educativos para estudiantes universitarios"
+        doc.Info.Title = "StudyRecommendation API";
+        doc.Info.Version = "v1";
+        doc.Info.Description = "API de recomendación de recursos educativos para estudiantes universitarios";
+        return Task.CompletedTask;
     });
 });
 
@@ -36,9 +37,8 @@ using (IServiceScope scope = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "StudyRecommendation API v1"));
+    app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseCors();
