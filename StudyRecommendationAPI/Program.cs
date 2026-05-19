@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using StudyRecommendationAPI.Configuration;
 using StudyRecommendationAPI.Data;
 using StudyRecommendationAPI.Extensions;
+using StudyRecommendationAPI.Services;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,25 @@ builder.Services.AddOpenApi(options =>
         return Task.CompletedTask;
     });
 });
+
+builder.Services.Configure<ExternalApisConfig>(
+    builder.Configuration.GetSection(ExternalApisConfig.Section));
+
+builder.Services.AddHttpClient("ollama", client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["ExternalApis:Ollama:BaseUrl"] ?? "http://localhost:11434");
+});
+
+builder.Services.AddSingleton<OllamaService>();
+builder.Services.AddSingleton<YouTubeService>();
+builder.Services.AddSingleton<BraveSearchService>();
+builder.Services.AddSingleton<ClaudeCodeService>();
+
+string claudeApiKey = builder.Configuration["ExternalApis:Anthropic:ApiKey"]
+    ?? Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")
+    ?? string.Empty;
+builder.Services.AddSingleton(new ClaudeService(claudeApiKey));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
@@ -32,6 +53,20 @@ using (IServiceScope scope = app.Services.CreateScope())
 {
     AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.EnsureCreated();
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS SearchResults (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Topic TEXT NOT NULL,
+            VideoUrl TEXT NULL,
+            VideoPositiveVotes INTEGER NOT NULL DEFAULT 0,
+            VideoNegativeVotes INTEGER NOT NULL DEFAULT 0,
+            ArticleUrl TEXT NULL,
+            ArticlePositiveVotes INTEGER NOT NULL DEFAULT 0,
+            ArticleNegativeVotes INTEGER NOT NULL DEFAULT 0,
+            CreatedAt TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS IX_SearchResults_Topic ON SearchResults (Topic);
+    """);
     await SeedData.SeedAsync(db);
 }
 
@@ -46,6 +81,7 @@ app.UseHttpsRedirection();
 
 app.MapSyllabusEndpoints();
 app.MapRecommendationEndpoints();
+app.MapSearchEndpoints();
 app.MapFeedbackEndpoints();
 app.MapSubjectEndpoints();
 

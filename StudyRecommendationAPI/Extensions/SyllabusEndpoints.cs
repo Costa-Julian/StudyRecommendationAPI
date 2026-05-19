@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using StudyRecommendationAPI.Data;
 using StudyRecommendationAPI.DTOs;
 using StudyRecommendationAPI.Models;
+using StudyRecommendationAPI.Services;
 
 namespace StudyRecommendationAPI.Extensions;
 
@@ -12,7 +13,7 @@ public static class SyllabusEndpoints
 {
     public static void MapSyllabusEndpoints(this WebApplication app)
     {
-        app.MapPost("/api/syllabus/process", async (ProcessSyllabusRequest request, AppDbContext db) =>
+        app.MapPost("/api/syllabus/process", async (ProcessSyllabusRequest request, AppDbContext db, OllamaService ollama, ClaudeService claude) =>
         {
             if (string.IsNullOrWhiteSpace(request.SubjectName))
                 return Results.Problem("El nombre de la materia es requerido.", statusCode: 400);
@@ -45,13 +46,26 @@ public static class SyllabusEndpoints
             db.Subjects.Add(subject);
             await db.SaveChangesAsync();
 
+            // First check mocked topics for known subjects, then fall back to Claude
             Dictionary<string, List<(int unitNumber, string unitName, string topicName, int orderIndex)>> mockData =
                 SeedData.GetMockTopics();
 
-            List<(int unitNumber, string unitName, string topicName, int orderIndex)> topicDefs =
-                mockData.TryGetValue(subjectName, out List<(int, string, string, int)>? found)
-                    ? found
-                    : GenerateGenericTopics();
+            List<(int unitNumber, string unitName, string topicName, int orderIndex)> topicDefs;
+
+            if (mockData.TryGetValue(subjectName, out List<(int, string, string, int)>? found))
+            {
+                topicDefs = found;
+            }
+            else
+            {
+                // Try Ollama first (local, free); fall back to Claude if unavailable
+                List<(int, string, string, int)>? ollamaTopics =
+                    await ollama.ExtractSyllabusTopicsAsync(subjectName, request.FileBase64);
+
+                topicDefs = (ollamaTopics != null && ollamaTopics.Count > 0)
+                    ? ollamaTopics
+                    : await claude.ExtractSyllabusTopicsAsync(request.FileBase64, subjectName);
+            }
 
             List<Topic> topics = topicDefs.Select(t => new Topic
             {
