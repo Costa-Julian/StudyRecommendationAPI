@@ -29,7 +29,6 @@ builder.Services.AddHttpClient("ollama", client =>
 
 builder.Services.AddSingleton<OllamaService>();
 builder.Services.AddSingleton<YouTubeService>();
-builder.Services.AddSingleton<BraveSearchService>();
 builder.Services.AddSingleton<ClaudeCodeService>();
 
 string claudeApiKey = builder.Configuration["ExternalApis:Anthropic:ApiKey"]

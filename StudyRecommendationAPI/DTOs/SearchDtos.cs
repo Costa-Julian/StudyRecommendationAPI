@@ -25,10 +25,3 @@ public class RateSearchRequest
     public string ResourceType { get; set; } = string.Empty; // "video" | "article"
     public bool IsPositive { get; set; }
 }
-
-public class SearchLink
-{
-    public string Title { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
-    public string Source { get; set; } = string.Empty;
-}

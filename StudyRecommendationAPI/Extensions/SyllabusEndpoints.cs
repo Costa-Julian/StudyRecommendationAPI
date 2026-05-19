@@ -150,23 +150,4 @@ public static class SyllabusEndpoints
         );
     }
 
-    private static string RemoveDiacritics(string text)
-    {
-        string normalized = text.Normalize(NormalizationForm.FormD);
-        var chars = normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
-        return new string(chars.ToArray()).Normalize(NormalizationForm.FormC);
-    }
-
-    private static List<(int, string, string, int)> GenerateGenericTopics()
-    {
-        return new List<(int, string, string, int)>
-        {
-            (1, "Introducción", "Conceptos fundamentales", 1),
-            (1, "Introducción", "Historia y evolución", 2),
-            (2, "Desarrollo", "Principios y metodologías", 1),
-            (2, "Desarrollo", "Aplicaciones prácticas", 2),
-            (3, "Avanzado", "Tópicos avanzados", 1),
-            (3, "Avanzado", "Casos de estudio", 2),
-        };
-    }
 }
