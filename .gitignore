@@ -480,3 +480,12 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# StudyRecommendation API - archivos generados
+Distribuible/
+StudyRecommendationAPI-distribuible/
+*-distribuible.zip
+*.db
+
+# Claude Code settings locales
+.claude/settings.local.json

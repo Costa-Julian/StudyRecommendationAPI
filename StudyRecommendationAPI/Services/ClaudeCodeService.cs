@@ -1,30 +1,35 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using StudyRecommendationAPI.Configuration;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.Content;
 
 namespace StudyRecommendationAPI.Services;
 
-/// <summary>
-/// Runs prompts through the Claude Code CLI process and captures the response.
-/// </summary>
 public class ClaudeCodeService(IOptions<ExternalApisConfig> config)
 {
     private readonly ClaudeCodeConfig _config = config.Value.ClaudeCode;
 
-    /// <summary>
-    /// Sends a prompt to the Claude Code CLI and returns the raw text response.
-    /// </summary>
-    public async Task<(bool Success, string Result, string Error)> RunPromptAsync(string prompt)
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        ProcessStartInfo startInfo = BuildStartInfo(prompt);
+        PropertyNameCaseInsensitive = true
+    };
+
+    public async Task<(bool Success, string Result, string Error)> RunPromptAsync(
+        string prompt, string[]? allowedTools = null)
+    {
+        ProcessStartInfo startInfo = BuildStartInfo(prompt, allowedTools);
 
         using Process process = new() { StartInfo = startInfo };
 
         try
         {
             process.Start();
-            process.StandardInput.Close(); // señala modo no-interactivo
+            process.StandardInput.Close();
 
             using CancellationTokenSource cts = new(TimeSpan.FromSeconds(_config.TimeoutSeconds));
 
@@ -52,9 +57,83 @@ public class ClaudeCodeService(IOptions<ExternalApisConfig> config)
         }
     }
 
-    private ProcessStartInfo BuildStartInfo(string prompt)
+    public async Task<List<(int unitNumber, string unitName, string topicName, int orderIndex)>?>
+        ExtractSyllabusTopicsAsync(string subjectName, string? fileBase64 = null)
     {
-        // On Windows, .cmd wrappers (npm-installed tools) require cmd.exe
+        try
+        {
+            string? pdfText = null;
+            if (!string.IsNullOrEmpty(fileBase64) && fileBase64.StartsWith("JVBERi0"))
+                pdfText = ExtractPdfText(fileBase64);
+
+            string prompt = BuildSyllabusPrompt(subjectName, pdfText);
+
+            (bool success, string result, _) = await RunPromptAsync(prompt);
+            if (!success || string.IsNullOrEmpty(result)) return null;
+
+            return ParseSyllabusJson(result);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? ExtractPdfText(string base64)
+    {
+        try
+        {
+            byte[] bytes = Convert.FromBase64String(base64);
+            using PdfDocument pdf = PdfDocument.Open(bytes);
+            StringBuilder sb = new();
+            foreach (Page page in pdf.GetPages())
+                sb.AppendLine(page.Text);
+            return sb.ToString();
+        }
+        catch { return null; }
+    }
+
+    private static string BuildSyllabusPrompt(string subjectName, string? pdfText)
+    {
+        string jsonExample = """{"units":[{"unitNumber":1,"unitName":"Nombre Unidad","topics":[{"topicName":"Tema específico","orderIndex":1}]}]}""";
+
+        if (!string.IsNullOrWhiteSpace(pdfText))
+        {
+            string truncated = pdfText.Length > 4000 ? pdfText[..4000] : pdfText;
+            return $"Analizá el siguiente programa de la materia \"{subjectName}\" y extraé su estructura de unidades y temas. Devolvé ÚNICAMENTE el JSON sin markdown ni explicaciones: {jsonExample} Programa: {truncated}";
+        }
+
+        return $"Sos un experto en diseño curricular universitario. Generá un programa académico completo para la materia \"{subjectName}\" con 4 a 6 unidades temáticas. Devolvé ÚNICAMENTE el JSON sin markdown ni explicaciones. Cada unidad debe tener entre 3 y 6 temas específicos y educativos. Usá el idioma del nombre de la materia. Formato JSON requerido: {jsonExample}";
+    }
+
+    private static List<(int, string, string, int)>? ParseSyllabusJson(string text)
+    {
+        try
+        {
+            text = text.Trim();
+            if (text.StartsWith("```"))
+            {
+                int start = text.IndexOf('\n') + 1;
+                int end = text.LastIndexOf("```");
+                if (end > start) text = text[start..end].Trim();
+            }
+
+            int jsonStart = text.IndexOf('{');
+            if (jsonStart > 0) text = text[jsonStart..];
+
+            SyllabusResult? result = JsonSerializer.Deserialize<SyllabusResult>(text, JsonOptions);
+            if (result?.Units == null || result.Units.Count == 0) return null;
+
+            return result.Units
+                .SelectMany(u => u.Topics.Select((t, i) =>
+                    (u.UnitNumber, u.UnitName, t.TopicName, t.OrderIndex > 0 ? t.OrderIndex : i + 1)))
+                .ToList();
+        }
+        catch { return null; }
+    }
+
+    private ProcessStartInfo BuildStartInfo(string prompt, string[]? allowedTools)
+    {
         bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
         ProcessStartInfo startInfo = new()
@@ -82,10 +161,42 @@ public class ClaudeCodeService(IOptions<ExternalApisConfig> config)
         startInfo.ArgumentList.Add(prompt);
         startInfo.ArgumentList.Add("--output-format");
         startInfo.ArgumentList.Add("text");
-        startInfo.ArgumentList.Add("--allowedTools");
-        startInfo.ArgumentList.Add("WebSearch");
+
+        if (allowedTools != null && allowedTools.Length > 0)
+        {
+            startInfo.ArgumentList.Add("--allowedTools");
+            startInfo.ArgumentList.Add(string.Join(",", allowedTools));
+        }
+
         startInfo.ArgumentList.Add("--dangerously-skip-permissions");
 
         return startInfo;
     }
+}
+
+file class SyllabusResult
+{
+    [JsonPropertyName("units")]
+    public List<SyllabusUnit> Units { get; set; } = [];
+}
+
+file class SyllabusUnit
+{
+    [JsonPropertyName("unitNumber")]
+    public int UnitNumber { get; set; }
+
+    [JsonPropertyName("unitName")]
+    public string UnitName { get; set; } = string.Empty;
+
+    [JsonPropertyName("topics")]
+    public List<SyllabusTopic> Topics { get; set; } = [];
+}
+
+file class SyllabusTopic
+{
+    [JsonPropertyName("topicName")]
+    public string TopicName { get; set; } = string.Empty;
+
+    [JsonPropertyName("orderIndex")]
+    public int OrderIndex { get; set; }
 }

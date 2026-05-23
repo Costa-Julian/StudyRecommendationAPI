@@ -21,13 +21,6 @@ builder.Services.AddOpenApi(options =>
 builder.Services.Configure<ExternalApisConfig>(
     builder.Configuration.GetSection(ExternalApisConfig.Section));
 
-builder.Services.AddHttpClient("ollama", client =>
-{
-    client.BaseAddress = new Uri(
-        builder.Configuration["ExternalApis:Ollama:BaseUrl"] ?? "http://localhost:11434");
-});
-
-builder.Services.AddSingleton<OllamaService>();
 builder.Services.AddSingleton<YouTubeService>();
 builder.Services.AddSingleton<ClaudeCodeService>();
 
@@ -69,11 +62,8 @@ using (IServiceScope scope = app.Services.CreateScope())
     await SeedData.SeedAsync(db);
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.UseCors();
 app.UseHttpsRedirection();

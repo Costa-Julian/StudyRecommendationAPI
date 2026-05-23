@@ -98,7 +98,7 @@ public static class SearchEndpoints
     };
 
     private static string BuildSearchPrompt(string topic) =>
-        $"Usá WebSearch dos veces: primero buscá \"site:youtube.com {topic} tutorial\" y después buscá \"{topic} guía artículo\". Con los resultados respondé ÚNICAMENTE con estas dos líneas sin ningún texto extra: VIDEO: <url de youtube> ARTICLE: <url del artículo>";
+        $"Usá WebSearch dos veces: primero buscá \"site:youtube.com {topic} tutorial\" y después buscá \"{topic} guía artículo\". Con los resultados respondé ÚNICAMENTE con estas dos líneas sin ningún texto extra: VIDEO: <url de youtube, preferí videos de menos de 20 minutos de duración> ARTICLE: <url del artículo>";
 
     private static (string? video, string? article) ParseUrls(string result)
     {

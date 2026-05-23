@@ -13,7 +13,7 @@ public static class SyllabusEndpoints
 {
     public static void MapSyllabusEndpoints(this WebApplication app)
     {
-        app.MapPost("/api/syllabus/process", async (ProcessSyllabusRequest request, AppDbContext db, OllamaService ollama, ClaudeService claude) =>
+        app.MapPost("/api/syllabus/process", async (ProcessSyllabusRequest request, AppDbContext db, ClaudeCodeService claudeCode, ClaudeService claude) =>
         {
             if (string.IsNullOrWhiteSpace(request.SubjectName))
                 return Results.Problem("El nombre de la materia es requerido.", statusCode: 400);
@@ -58,12 +58,11 @@ public static class SyllabusEndpoints
             }
             else
             {
-                // Try Ollama first (local, free); fall back to Claude if unavailable
-                List<(int, string, string, int)>? ollamaTopics =
-                    await ollama.ExtractSyllabusTopicsAsync(subjectName, request.FileBase64);
+                List<(int, string, string, int)>? claudeCodeTopics =
+                    await claudeCode.ExtractSyllabusTopicsAsync(subjectName, request.FileBase64);
 
-                topicDefs = (ollamaTopics != null && ollamaTopics.Count > 0)
-                    ? ollamaTopics
+                topicDefs = (claudeCodeTopics != null && claudeCodeTopics.Count > 0)
+                    ? claudeCodeTopics
                     : await claude.ExtractSyllabusTopicsAsync(request.FileBase64, subjectName);
             }
 
