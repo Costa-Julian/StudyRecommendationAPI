@@ -10,7 +10,7 @@ public static class RecommendationEndpoints
 {
     public static void MapRecommendationEndpoints(this WebApplication app)
     {
-        app.MapGet("/api/recommendations/{topicId:int}", async (int topicId, AppDbContext db, YouTubeService youtube, ClaudeService claude) =>
+        app.MapGet("/api/recommendations/{topicId:int}", async (int topicId, AppDbContext db, YouTubeService youtube, ClaudeCodeService claudeCode) =>
         {
             Topic? topic = await db.Topics
                 .Include(t => t.Subject)
@@ -29,16 +29,15 @@ public static class RecommendationEndpoints
                     // Real videos from YouTube + Claude for articles
                     List<ResourceSuggestion> videos = await youtube.SearchVideosAsync(
                         topic.TopicName, topic.Subject.Name);
-                    List<ResourceSuggestion> claudeSuggestions = await claude.GetResourceRecommendationsAsync(
+                    List<ResourceSuggestion> claudeCodeSuggestions = await claudeCode.GetResourceRecommendationsAsync(
                         topic.TopicName, topic.Subject.Name);
 
                     suggestions.AddRange(videos);
-                    suggestions.AddRange(claudeSuggestions.Where(s => s.Type != "video"));
+                    suggestions.AddRange(claudeCodeSuggestions.Where(s => s.Type != "video"));
                 }
                 else
                 {
-                    // No YouTube key: Claude handles everything
-                    suggestions = await claude.GetResourceRecommendationsAsync(
+                    suggestions = await claudeCode.GetResourceRecommendationsAsync(
                         topic.TopicName, topic.Subject.Name);
                 }
 

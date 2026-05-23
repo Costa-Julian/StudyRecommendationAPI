@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using StudyRecommendationAPI.Configuration;
+using StudyRecommendationAPI.DTOs;
 
 namespace StudyRecommendationAPI.Services;
 

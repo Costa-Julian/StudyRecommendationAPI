@@ -24,11 +24,6 @@ builder.Services.Configure<ExternalApisConfig>(
 builder.Services.AddSingleton<YouTubeService>();
 builder.Services.AddSingleton<ClaudeCodeService>();
 
-string claudeApiKey = builder.Configuration["ExternalApis:Anthropic:ApiKey"]
-    ?? Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")
-    ?? string.Empty;
-builder.Services.AddSingleton(new ClaudeService(claudeApiKey));
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=studyrecommendation.db"));

@@ -1,4 +1,21 @@
+using System.Text.Json.Serialization;
+
 namespace StudyRecommendationAPI.DTOs;
+
+public class ResourceSuggestion
+{
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    [JsonPropertyName("title")]
+    public string Title { get; set; } = string.Empty;
+
+    [JsonPropertyName("url")]
+    public string Url { get; set; } = string.Empty;
+
+    [JsonPropertyName("source")]
+    public string Source { get; set; } = string.Empty;
+}
 
 public class RecommendationsResponse
 {

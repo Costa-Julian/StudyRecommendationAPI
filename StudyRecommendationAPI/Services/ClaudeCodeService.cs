@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using StudyRecommendationAPI.Configuration;
+using StudyRecommendationAPI.DTOs;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
@@ -77,6 +78,42 @@ public class ClaudeCodeService(IOptions<ExternalApisConfig> config)
         {
             return null;
         }
+    }
+
+    public async Task<List<ResourceSuggestion>> GetResourceRecommendationsAsync(string topicName, string subjectName)
+    {
+        try
+        {
+            string jsonExample = """[{"type":"video","title":"Titulo del recurso","url":"https://ejemplo.com","source":"YouTube"}]""";
+            string prompt = $"Usá WebSearch para buscar recursos educativos sobre \"{topicName}\" de la materia \"{subjectName}\". Devolvé ÚNICAMENTE un JSON array sin markdown ni texto extra con este formato: {jsonExample} Incluí al menos 2 videos de YouTube y 1 artículo. El campo type debe ser \"video\" o \"article\".";
+
+            (bool success, string result, _) = await RunPromptAsync(prompt, ["WebSearch"]);
+            if (!success || string.IsNullOrEmpty(result)) return [];
+
+            return ParseResourcesJson(result) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static List<ResourceSuggestion>? ParseResourcesJson(string text)
+    {
+        try
+        {
+            text = text.Trim();
+            if (text.StartsWith("```"))
+            {
+                int start = text.IndexOf('\n') + 1;
+                int end = text.LastIndexOf("```");
+                if (end > start) text = text[start..end].Trim();
+            }
+            int jsonStart = text.IndexOf('[');
+            if (jsonStart > 0) text = text[jsonStart..];
+            return JsonSerializer.Deserialize<List<ResourceSuggestion>>(text, JsonOptions);
+        }
+        catch { return null; }
     }
 
     private static string? ExtractPdfText(string base64)

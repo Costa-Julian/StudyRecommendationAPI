@@ -13,7 +13,7 @@ public static class SyllabusEndpoints
 {
     public static void MapSyllabusEndpoints(this WebApplication app)
     {
-        app.MapPost("/api/syllabus/process", async (ProcessSyllabusRequest request, AppDbContext db, ClaudeCodeService claudeCode, ClaudeService claude) =>
+        app.MapPost("/api/syllabus/process", async (ProcessSyllabusRequest request, AppDbContext db, ClaudeCodeService claudeCode) =>
         {
             if (string.IsNullOrWhiteSpace(request.SubjectName))
                 return Results.Problem("El nombre de la materia es requerido.", statusCode: 400);
@@ -61,9 +61,7 @@ public static class SyllabusEndpoints
                 List<(int, string, string, int)>? claudeCodeTopics =
                     await claudeCode.ExtractSyllabusTopicsAsync(subjectName, request.FileBase64);
 
-                topicDefs = (claudeCodeTopics != null && claudeCodeTopics.Count > 0)
-                    ? claudeCodeTopics
-                    : await claude.ExtractSyllabusTopicsAsync(request.FileBase64, subjectName);
+                topicDefs = claudeCodeTopics ?? [];
             }
 
             List<Topic> topics = topicDefs.Select(t => new Topic
