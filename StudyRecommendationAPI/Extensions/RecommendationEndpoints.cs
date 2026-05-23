@@ -10,7 +10,7 @@ public static class RecommendationEndpoints
 {
     public static void MapRecommendationEndpoints(this WebApplication app)
     {
-        app.MapGet("/api/recommendations/{topicId:int}", async (int topicId, AppDbContext db, YouTubeService youtube, ClaudeCodeService claudeCode) =>
+        app.MapGet("/api/recommendations/{topicId:int}", async (int topicId, AppDbContext db, ClaudeCodeService claudeCode) =>
         {
             Topic? topic = await db.Topics
                 .Include(t => t.Subject)
@@ -22,24 +22,8 @@ public static class RecommendationEndpoints
 
             if (topic.Resources.Count == 0)
             {
-                List<ResourceSuggestion> suggestions = [];
-
-                if (youtube.IsEnabled)
-                {
-                    // Real videos from YouTube + Claude for articles
-                    List<ResourceSuggestion> videos = await youtube.SearchVideosAsync(
-                        topic.TopicName, topic.Subject.Name);
-                    List<ResourceSuggestion> claudeCodeSuggestions = await claudeCode.GetResourceRecommendationsAsync(
-                        topic.TopicName, topic.Subject.Name);
-
-                    suggestions.AddRange(videos);
-                    suggestions.AddRange(claudeCodeSuggestions.Where(s => s.Type != "video"));
-                }
-                else
-                {
-                    suggestions = await claudeCode.GetResourceRecommendationsAsync(
-                        topic.TopicName, topic.Subject.Name);
-                }
+                List<ResourceSuggestion> suggestions = await claudeCode.GetResourceRecommendationsAsync(
+                    topic.TopicName, topic.Subject.Name);
 
                 if (suggestions.Count > 0)
                 {

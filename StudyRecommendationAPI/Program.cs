@@ -21,7 +21,6 @@ builder.Services.AddOpenApi(options =>
 builder.Services.Configure<ExternalApisConfig>(
     builder.Configuration.GetSection(ExternalApisConfig.Section));
 
-builder.Services.AddSingleton<YouTubeService>();
 builder.Services.AddSingleton<ClaudeCodeService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
