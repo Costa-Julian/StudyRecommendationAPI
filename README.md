@@ -95,9 +95,6 @@ El archivo `appsettings.json` dentro de la carpeta del proyecto contiene la conf
 
 ```json
 "ExternalApis": {
-  "Anthropic": {
-    "ApiKey": ""           // API key de Anthropic (fallback si Claude Code no está disponible)
-  },
   "YouTube": {
     "ApiKey": "",          // API key de YouTube Data API v3 (opcional)
     "MaxResultsPerTopic": 2
