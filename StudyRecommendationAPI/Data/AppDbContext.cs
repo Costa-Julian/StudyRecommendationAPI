@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<Resource> Resources => Set<Resource>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
+    public DbSet<SearchResult> SearchResults => Set<SearchResult>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +40,16 @@ public class AppDbContext : DbContext
         {
             e.HasKey(f => f.Id);
             e.HasIndex(f => new { f.ResourceId, f.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<SearchResult>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.HasIndex(s => s.Topic);
+            e.Property(s => s.VideoPositiveVotes).HasDefaultValue(0);
+            e.Property(s => s.VideoNegativeVotes).HasDefaultValue(0);
+            e.Property(s => s.ArticlePositiveVotes).HasDefaultValue(0);
+            e.Property(s => s.ArticleNegativeVotes).HasDefaultValue(0);
         });
     }
 }
